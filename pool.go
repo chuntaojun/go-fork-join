@@ -1,24 +1,30 @@
 package fork_join
 
 import (
+	"context"
 	"sync"
 )
 
 type Pool struct {
-
-	lock sync.Mutex
-
-	workerCache sync.Pool
-
-	PanicHandler func(interface{})
+	lock 			sync.Mutex
+	workerCache 	sync.Pool
+	cancel			context.CancelFunc
+	panicHandler 	func(interface{})
+	err				interface{}
 }
 
-func NewPool() *Pool {
-	p := &Pool{}
+func newPool(cancel context.CancelFunc) *Pool {
+	p := &Pool{
+		cancel:cancel,
+	}
+	p.panicHandler = func(i interface{}) {
+		p.cancel()
+		p.err = i
+	}
 	return p
 }
 
-func (p *Pool) retrieveWorker() *Worker {
+func (p *Pool) retrieveWorker(ctx context.Context) *Worker {
 
 	defer func() {
 		p.lock.Unlock()
@@ -34,10 +40,11 @@ func (p *Pool) retrieveWorker() *Worker {
 			job: make(chan *struct {
 				T Task
 				F *ForkJoinTask
+				C context.Context
 			}, 1),
 		}
 	}
-	w.run()
+	w.run(ctx)
 	return w
 }
 

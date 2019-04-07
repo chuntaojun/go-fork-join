@@ -3,12 +3,13 @@ package example
 import (
 	"fmt"
 	"fork-join"
+	"github.com/smartystreets/assertions/assert"
+	"github.com/smartystreets/assertions/should"
 	"testing"
 	"time"
 )
 
 var taskPool = fork_join.NewForkJoinPool("pool", 10)
-var Id = int32(0)
 
 type SumAdd struct {
 	start int64
@@ -17,8 +18,15 @@ type SumAdd struct {
 }
 
 func (s *SumAdd) Compute() interface{} {
+
+	defer func() {
+		if p := recover(); p != nil {
+			fmt.Printf("here is err %#v\n", p)
+		}
+	}()
+
 	var sum int64
-	if s.end-s.start < 2 {
+	if s.end-s.start < 1000 {
 		tmp := int64(0)
 		for i := s.start; i <= s.end; i ++ {
 			tmp += i
@@ -28,14 +36,21 @@ func (s *SumAdd) Compute() interface{} {
 		mid := (s.start + s.end) / 2
 		sTask1 := &SumAdd{start: s.start, end: mid}
 		sTask2 := &SumAdd{start: mid + 1, end: s.end}
-		sTask1.Build(taskPool, &Id).Run(sTask1)
-		sTask2.Build(taskPool, &Id).Run(sTask2)
-		sum = sTask1.Join().(int64) + sTask2.Join().(int64)
+		sTask1.Build(taskPool).Run(sTask1)
+		sTask2.Build(taskPool).Run(sTask2)
+		fmt.Printf("goroutine-id is %#v\n", sTask1.GetTaskID())
+		fmt.Printf("goroutine-id is %#v\n", sTask2.GetTaskID())
+		ok1, r1 := sTask1.Join()
+		ok2, r2 := sTask2.Join()
+		if ok1 && ok2 {
+			sum = r1.(int64) + r2.(int64)
+		}
 	}
 	return sum
 }
 
 func TestForkJoin(t *testing.T) {
+
 	t1 := time.Now()
 	v1 := int64(0)
 	for i := int64(1); i <= 1000000; i ++ {
@@ -43,13 +58,16 @@ func TestForkJoin(t *testing.T) {
 	}
 	fmt.Printf("result v1 is %#v\n", v1)
 	elapsed := time.Since(t1)
-	fmt.Println("App elapsed: ", elapsed)
+	fmt.Println("Costumer App elapsed: ", elapsed)
 
-	s := &SumAdd{start: 1, end: 100}
+	s := &SumAdd{start: 1, end: 1000000}
 	t2 := time.Now()
 	v2 := s.Compute()
 	fmt.Printf("result v2 is %#v\n", v2)
 	elapsed2 := time.Since(t2)
-	fmt.Println("App elapsed: ", elapsed2)
+	fmt.Println("ForkJoin App elapsed: ", elapsed2)
+
+	result := assert.So(v2, should.Equal, v1)
+	fmt.Println(result.Log())
 
 }
