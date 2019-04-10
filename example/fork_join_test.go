@@ -38,8 +38,6 @@ func (s *SumAdd) Compute() interface{} {
 		sTask2 := &SumAdd{start: mid + 1, end: s.end}
 		sTask1.Build(taskPool).Run(sTask1)
 		sTask2.Build(taskPool).Run(sTask2)
-		fmt.Printf("goroutine-id is %#v\n", sTask1.GetTaskID())
-		fmt.Printf("goroutine-id is %#v\n", sTask2.GetTaskID())
 		ok1, r1 := sTask1.Join()
 		ok2, r2 := sTask2.Join()
 		if ok1 && ok2 {
@@ -53,17 +51,15 @@ func TestForkJoin(t *testing.T) {
 
 	t1 := time.Now()
 	v1 := int64(0)
-	for i := int64(1); i <= 1000000; i ++ {
+	for i := int64(1); i <= 100000000; i ++ {
 		v1 += i
 	}
-	fmt.Printf("result v1 is %#v\n", v1)
 	elapsed := time.Since(t1)
 	fmt.Println("Costumer App elapsed: ", elapsed)
 
-	s := &SumAdd{start: 1, end: 1000000}
+	s := &SumAdd{start: 1, end: 100000000}
 	t2 := time.Now()
 	v2 := s.Compute()
-	fmt.Printf("result v2 is %#v\n", v2)
 	elapsed2 := time.Since(t2)
 	fmt.Println("ForkJoin App elapsed: ", elapsed2)
 
