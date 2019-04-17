@@ -6,17 +6,17 @@ import (
 )
 
 type Pool struct {
-	lock 			sync.Mutex
-	workerCache 	sync.Pool
-	workers			[]*Worker
-	cancel			context.CancelFunc
-	panicHandler 	func(interface{})
-	err				interface{}
+	lock         sync.Mutex
+	workerCache  sync.Pool
+	workers      []*Worker
+	cancel       context.CancelFunc
+	panicHandler func(interface{})
+	err          interface{}
 }
 
 func newPool(cancel context.CancelFunc) *Pool {
 	p := &Pool{
-		cancel:cancel,
+		cancel: cancel,
 	}
 	p.panicHandler = func(i interface{}) {
 		p.cancel()
@@ -25,19 +25,29 @@ func newPool(cancel context.CancelFunc) *Pool {
 	return p
 }
 
+// 对外开放，任务提交处
+func (p *Pool) Submit(ctx context.Context, job *struct {
+	T Task
+	F *ForkJoinTask
+	C context.Context
+}) {
+	w := p.retrieveWorker(ctx)
+	w.job <- job
+}
+
 func (p *Pool) retrieveWorker(ctx context.Context) *Worker {
 
 	var w *Worker
 
-	p.lock.Lock()
 	idleWorker := p.workers
-	n := len(idleWorker) - 1
-	if n >= 0 {
+
+	if len(idleWorker) >= 1 {
+		p.lock.Lock()
+		n := len(idleWorker) - 1
 		w = idleWorker[n]
 		p.workers = idleWorker[:n]
 		p.lock.Unlock()
 	} else {
-		p.lock.Unlock()
 		if cacheWorker := p.workerCache.Get(); cacheWorker != nil {
 			w = cacheWorker.(*Worker)
 		} else {
@@ -60,4 +70,3 @@ func (p *Pool) releaseWorker(worker *Worker) {
 	p.workers = append(p.workers, worker)
 	p.lock.Unlock()
 }
-
