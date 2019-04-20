@@ -45,7 +45,7 @@ func (w *Worker) run(ctx context.Context) {
 					}
 					tmpTask = job.F
 					job.F.result <- job.T.Compute()
-					panic("异常出现")
+					w.pool.releaseWorker(w)
 				}
 			}
 		}

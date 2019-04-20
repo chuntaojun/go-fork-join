@@ -7,17 +7,17 @@ import (
 )
 
 type ForkJoinPool struct {
-	Name      		string
-	cap       		int32
-	taskQueue 		*TaskQueue
-	wp        		*Pool
-	lock      		sync.Mutex
-	signal    		*sync.Cond
-	once      		sync.Once
-	goroutineID		int32
-	ctx         	context.Context
-	cancel			context.CancelFunc
-	err				interface{}
+	Name        string
+	cap         int32
+	taskQueue   *TaskQueue
+	wp          *Pool
+	lock        sync.Mutex
+	signal      *sync.Cond
+	once        sync.Once
+	goroutineID int32
+	ctx         context.Context
+	cancel      context.CancelFunc
+	err         interface{}
 }
 
 func NewForkJoinPool(name string, workerCap int32) *ForkJoinPool {
@@ -26,8 +26,8 @@ func NewForkJoinPool(name string, workerCap int32) *ForkJoinPool {
 		Name:      name,
 		cap:       workerCap,
 		taskQueue: NewTaskQueue(workerCap),
-		ctx:	   ctx,
-		cancel:	   cancel,
+		ctx:       ctx,
+		cancel:    cancel,
 	}
 	fp.wp = newPool(cancel)
 	fp.signal = sync.NewCond(new(sync.Mutex))
@@ -35,7 +35,7 @@ func NewForkJoinPool(name string, workerCap int32) *ForkJoinPool {
 	return fp
 }
 
-func (fp *ForkJoinPool) SetPanicHandler(panicHandler func(interface{}))  {
+func (fp *ForkJoinPool) SetPanicHandler(panicHandler func(interface{})) {
 	fp.wp.panicHandler = panicHandler
 }
 
@@ -56,11 +56,11 @@ func (fp *ForkJoinPool) run(ctx context.Context) {
 			default:
 				hasTask, job, ft := fp.taskQueue.dequeueByTali(wId)
 				if hasTask {
-					fp.wp.retrieveWorker(ctx).job <- &struct {
+					fp.wp.Submit(ctx, &struct {
 						T Task
 						F *ForkJoinTask
 						C context.Context
-					}{T: job, F: ft, C:ctx}
+					}{T: job, F: ft, C: ctx})
 				}
 				wId = (wId + 1) % fp.cap
 			}
