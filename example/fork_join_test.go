@@ -76,6 +76,7 @@ func TestForkJoin(t *testing.T) {
 
 func BenchmarkForkJoin(b *testing.B)  {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	b.ReportAllocs()
 	for i := 0; i < 10; i ++ {
 		Method()
 	}

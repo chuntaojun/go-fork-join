@@ -39,6 +39,11 @@ func (fp *ForkJoinPool) SetPanicHandler(panicHandler func(interface{})) {
 	fp.wp.panicHandler = panicHandler
 }
 
+// 关闭 ForkJoin 任务池
+func (fp *ForkJoinPool) ShutDown() {
+
+}
+
 func (fp *ForkJoinPool) pushTask(t Task, f *ForkJoinTask) {
 	fp.taskQueue.enqueue(t, f)
 }

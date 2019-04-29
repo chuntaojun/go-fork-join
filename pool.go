@@ -35,6 +35,16 @@ func (p *Pool) Submit(ctx context.Context, job *struct {
 	w.job <- job
 }
 
+// 关闭 Worker 池
+func (p *Pool) ShutDown() {
+
+}
+
+// 清除超出 Worker Pool Size 的 worker
+func (p *Pool) clearIdleWorker() {
+
+}
+
 func (p *Pool) retrieveWorker(ctx context.Context) *Worker {
 
 	var w *Worker
