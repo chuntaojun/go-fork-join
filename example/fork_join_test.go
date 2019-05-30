@@ -20,12 +20,6 @@ type SumAdd struct {
 
 func (s *SumAdd) Compute() interface{} {
 
-	defer func() {
-		if p := recover(); p != nil {
-			fmt.Printf("here is err %#v\n", p)
-		}
-	}()
-
 	var sum int64
 	if s.end-s.start < 100 {
 		tmp := int64(0)
